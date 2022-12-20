@@ -1,0 +1,24 @@
+[
+  {
+  "PropertyGroupId": "kinesis.analytics.flink.run.options",
+  "PropertyMap": {
+    "python": "airaq-average-measurements.py",
+    "jarfile": "lib/flink-sql-connector-kinesis-1.15.2.jar"
+   }
+  },
+  {
+    "PropertyGroupId": "input",
+    "PropertyMap": {
+      "input.stream.name": "exploration-stream-jonas",
+      "scan.stream.initpos": "LATEST",
+      "aws.region": "eu-west-1"
+    }
+  },
+  {
+    "PropertyGroupId": "output",
+    "PropertyMap": {
+      "output.stream.name": "destination-jonas",
+      "aws.region": "eu-west-1"
+    }
+  }
+]

@@ -1,0 +1,36 @@
+{
+    "ApplicationCodeConfigurationUpdate": {
+        "CodeContentTypeUpdate": "ZIPFILE",
+        "CodeContentUpdate": {
+            "S3ContentLocationUpdate": {
+                "BucketARNUpdate": "arn:aws:s3:::deployment-artifacts-jonas",
+                "FileKeyUpdate": "openaq-realtime-analysis-flink.zip"
+            }
+        }
+    },
+    "EnvironmentPropertyUpdates": {
+        "PropertyGroups": [ 
+            { 
+               "PropertyGroupId": "input",
+               "PropertyMap" : {
+                    "aws.region" : "eu-west-1",
+                    "input.stream.name" : "openaq-raw-jonas"
+               }
+            },
+            { 
+               "PropertyGroupId": "output",
+               "PropertyMap" : {
+                    "aws.region" : "eu-west-1",
+                    "output.stream.name" : "openaq-realtime-aggregated-jonas"
+               }
+            },
+            { 
+               "PropertyGroupId": "kinesis.analytics.flink.run.options",
+               "PropertyMap" : {
+                    "jarfile" : "lib/flink-sql-connector-kinesis-1.15.2.jar",
+                    "python" : "compute-realtime-air-quality.py"
+               }
+            }
+         ]
+    }
+}
