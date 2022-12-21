@@ -6,7 +6,6 @@ import string
 from datetime import datetime, timedelta
 
 import pymysql
-from mariadb.constants.ERR import ER_DUP_ENTRY
 from dotenv import load_dotenv
 import numpy as np
 
@@ -23,7 +22,6 @@ def connect_to_database(settings_file:str = None) -> pymysql.connections.Connect
         rds_host  = os.environ.get('DB_HOSTNAME')
         name = os.environ.get('DB_USERNAME')
         password = os.environ.get('DB_PASSWORD')
-        db_name = os.environ.get('DB_DATABASE')
 
     try:
         connection = pymysql.connect(

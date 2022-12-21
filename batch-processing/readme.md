@@ -2,6 +2,12 @@
 
 These files explore the feasibility of processing the OpenAQ data in batches in a MariaDB database for monitoring the current air quality in Belgian cities.
 
+## Data flow
+
+![](images/dataflow.jpg)
+
+New air quality measurements continue arrive and are ingested by an AWS Lambda function into a MariaDB database. An event scheduled on the database aggregates these events every 5 minutes to compute the air quality over the last three hours. 
+
 ## Setting up your development environment
 To get this project up and running, make sure you have the following installed:
 * Python 3
@@ -45,9 +51,22 @@ with:
 - password: password
 - database: openaq
 
-## Generating streaming test data
+## Generating test data
 
+You can generate test data by running the `generate-test-data.py` script via the terminal as
 
+```python
+generate-test-data.py <ingestion frequency per minute> <database configuration file>
+```
 
+- Ingestion frequency is optional and set by default to 100 measurements per minute
+- When no database configuration file is supplied, data is ingested in the local MariaDB instance. Data can be ingested in another database by providing a configuration file. This file has the following structure:
 
+```
+DB_USERNAME = "..."
+DB_PASSWORD = "..."
+DB_HOSTNAME = "..." 
+```
+
+Make sure this file is listed in the .gitignore file, so your password isn't uploaded to github for everyone to see (and use).
 

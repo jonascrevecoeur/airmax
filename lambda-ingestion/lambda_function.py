@@ -13,6 +13,13 @@ load_dotenv()
 database_connection = None
 kinesis_client=boto3.client('kinesis')
 
+
+destination_kinesis = os.environ.get('send_to_kinesis').lower() in ['true', '1', 'y', 'yes']
+destination_mariadb = os.environ.get('send_to_mariadb').lower() in ['true', '1', 'y', 'yes']
+
+if (not destination_kinesis) and (not destination_mariadb):
+    sys.exit('No destination configured')
+
 # read the MariaDB query template
 with open("insert-raw-record-many.sql", 'r') as f:
     sql = f.read()
@@ -62,20 +69,22 @@ def format_record(record: dict) -> dict:
 # Sending to multiple streams without checks might result in duplicate data in case of errors
 def lambda_handler(event, context):
     
-    if (database_connection == None) or (not database_connection.open):
+    if destination_mariadb and ((database_connection == None) or (not database_connection.open)):
         print("Connect to MariaDB")
         connect_to_database()
 
-    records = [format_record(record) for record in event["Records"]]
+    records = [format_record(json.loads(record['body'])) for record in event["Records"]]
     
     # send to kinesis
-    records_kinesis = [{'Data': json.dumps(record), 'PartitionKey': record['parameter_name'] + '|' + record['city']} for record in records]
-    response = kinesis_client.put_records(StreamName=os.environ.get('stream_name'), Records=records_kinesis)
+    if destination_kinesis:
+        records_kinesis = [{'Data': json.dumps(record), 'PartitionKey': record['parameter_name'] + '|' + record['city']} for record in records]
+        response = kinesis_client.put_records(StreamName=os.environ.get('stream_name'), Records=records_kinesis)
     
     # send to mariadb
-    records_mariadb = [tuple(record.values()) for record in records]
-    print(records_mariadb)
-    cursor = database_connection.cursor()
-    cursor.executemany(sql, records_mariadb)
-    database_connection.commit()
-    cursor.close()
+    if destination_mariadb:
+        records_mariadb = [tuple(record.values()) for record in records]
+        print(records_mariadb)
+        cursor = database_connection.cursor()
+        cursor.executemany(sql, records_mariadb)
+        database_connection.commit()
+        cursor.close()
