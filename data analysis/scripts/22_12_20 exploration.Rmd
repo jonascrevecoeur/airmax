@@ -1,0 +1,144 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Objective
+
+Exploration of the OpenAQ dataset to assess the following questions:
+
+- Was the data ingested correctly?
+- Can the OpenAQ data generate (near) realtime insights?
+- Are there other considertions to take into account when using the OpenAQ data
+  to motivate the adoptation of Airmax.
+
+### Required packages
+
+```{r}
+require(tidyverse)
+require(httr)
+``` 
+
+### Reading the data
+
+Data was extracted from MariaDB by running the following command in a terminal:
+
+```{python}
+python download-raw-data-from-mariadb.py data/openaq_raw.csv
+```
+
+Read the extracted csv file
+
+```{r}
+data <- read.csv("../data/openaq_raw.csv", encoding = 'UTF-8')
+```
+
+### Validation of the extracted data
+
+First rows of the data
+```{r, echo = TRUE}
+head(data)
+```
+#### Locations
+```{r}
+number_of_locations <- data %>% 
+  group_by(location) %>%
+  slice(1) %>%
+  nrow
+```
+
+We have collected data over the past few days data from **`r number_of_locations` locations**. This is in line with the number of active locations listed on (https://openaq.org/#/locations?countries=BE)
+
+According to the website, these locations are split into governmental and community stations. However, in our dataset only the governmental stations appear.
+
+```{r}
+data %>%
+  group_by(location, source_type) %>%
+  summarise(num_measurements = n()) %>%
+  group_by(source_type) %>%
+  summarise(number_of_stations = n(),
+            average_number_of_measurements = sum(num_measurements) / n())
+```
+Apperently the adoption of non-government sensors is quite recent. These sensors
+are also not included in the old v1 API, but are included in the new v2 API.
+
+Let's see whether we can download more data via the API. We download the data for December 20, 2022.
+```{r, cache=TRUE}
+url <- "https://api.openaq.org/v2/measurements"
+
+queryString <- list(
+  date_from = "2022-12-20T01:00:00",
+  date_to = "2022-12-21T01:00:00",
+  limit = "100000",
+  country = "BE",
+  order_by = "datetime"
+)
+
+response <- VERB("GET", url, query = queryString, content_type("application/octet-stream"), accept("application/json"))
+```
+
+```{r}
+require(jsonlite)
+data_api <- content(response, as="parsed") %>%
+  .$results %>%
+  map(unlist) %>%
+  bind_rows 
+```
+
+We obtain `r nrow(data_api)` measurements for a single day. Significantly more than what was collected by listening several days to the SNS queue.
+
+```{r}
+dim(data_api)
+```
+
+There is a big difference between the data of lowcost and reference grade sensors in OpenAQ:
+
+|             | Lowcost sensor  | Reference grade sensor |
+| ----------- | -----------     | ----------- |
+| Collected by| Community       | Government |
+| Available   | API             | API / SNS |
+| Coverage    | Limited         | Sensors across Belgium |
+| Frequency   | Realtime        | Few measurements / day |
+| Pollutants  | Only PM         | PM, CO, NO2, O3, SO2 |
+
+
+```{r}
+data_api %>%
+  group_by(location, parameter, sensorType) %>%
+  summarise(num_measurements = n()) %>%
+  group_by(sensorType, parameter) %>%
+  summarise(number_of_stations = n(),
+            average_number_of_measurements = sum(num_measurements) / n())
+
+```
+
+The reference grade sensors on OpenAQ report data collected from:
+
+- [European Air Quality Index](https://www.eea.europa.eu/themes/air/air-quality-index/index)
+
+This uses data collected by 
+
+- [Agence wallonne de l'air et du climat](https://awac.be/)
+- [De Vlaamse Milieu Maatschappij](https://www.vmm.be/)
+
+Which depend on data of
+
+- [IRCELINE](https://irceline.be/en)
+
+Both IRCELINE and the European Air Quality Index show interesting visualizations of Air quality across Belgium
+
+[IRCELINE](https://irceline.be/en/air-quality/measurements):
+
+![](images/irceline.png)
+
+[European Air Quality Index](https://airindex.eea.europa.eu/Map/AQI/Viewer/):
+
+![](images/airindex.png)
+
+An option is to not create our own tool, but instead use these existing websites to motivate the value of the Airmax filtration system.
+
+Irceline also offers an API to extract realtime data at a much higher resolution than OpenAQ.
+
+- API documentation: (https://geo.irceline.be/sos/static/doc/api-doc/#timeseries-examples)
+
+
