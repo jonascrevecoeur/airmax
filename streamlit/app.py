@@ -1,9 +1,12 @@
 import streamlit as st
 import pandas as pd
+import json
 import folium
 from streamlit_folium import st_folium
-from point import Point
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+
+import irceline_api 
+from point import Point
 
 st.header("POC - realtime air quality")
 st.markdown(f"""
@@ -24,10 +27,16 @@ phenomena_available = {
 
 phenomenon_selected = phenomena_available[st.selectbox("Phenomenon:", list(phenomena_available.keys()))]
 
-measurements = pd.read_csv('data/example_measurements.csv')
+if 'measurements_json' in st.session_state:
+    measurements = pd.DataFrame(json.loads(st.session_state['measurements_json']))
+else:
+    with st.spinner('Loading data'):
+        measurements = irceline_api.get_recent_measurements('data/metadata.csv')
+        st.session_state['measurements_json'] = measurements.to_json()
 
 measurements_phenomenon = measurements[measurements['phenomenon'] == phenomenon_selected]
 
+## prepare the map
 m = folium.Map(location=[50.7, 5], zoom_start=7.3)
 
 for index, row in measurements_phenomenon.iterrows():
@@ -51,6 +60,7 @@ for index, row in measurements_phenomenon.iterrows():
 
 map = st_folium(m, width = 800, height=400)
 
+## Visualize additional statistics for the selected point
 try:
     point_clicked = Point.from_dict(map["last_object_clicked"])
 
@@ -64,7 +74,7 @@ try:
                     filter(['phenomenon', 'measurement', 'num-measurements', 'reference-value-color']).
                     rename(columns= {'reference-value-color': 'reference'}))
 
-                st.text(f"All phenomena measured in {selected_location.split(' - ')[1]} over the last 3 hours")
+                st.text(f"All measurements for {selected_location.split(' - ')[1]} averaged over the last 3 hours")
 
                 options = GridOptionsBuilder.from_dataframe(data_location)
                 options.configure_columns('reference', hide = True)
