@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import pandas as pd
+from datetime import datetime
 
 def list_timeseries() -> dict:
         
@@ -70,3 +71,63 @@ def collect_and_store_metadata_as_csv(filename: str) -> None:
         time.sleep(2)
 
     pd.DataFrame(collected_metadata).to_csv(filename, index=None)
+
+# TODO: Checking data quality when parsing measurements
+# -99.99 appears to be a placeholder for a failed measurement, but there might be other values used in this way
+def _parse_measurements(measurements:dict) -> pd.DataFrame:
+
+    aggregated_measurements = []    
+    for series_id, data in measurements.items():
+        value_summed = 0
+        measurement_count = 0
+        for measurement in data['values']:
+            if (measurement['value'] is not None) and (not measurement['value'] == -99.99):
+                value_summed += measurement['value']
+                measurement_count += 1
+        
+        if measurement_count > 0:
+            aggregated_measurements.append({
+                'series-id': series_id,
+                'measurement': value_summed / measurement_count,
+                'num-measurements': measurement_count
+            })
+
+    return pd.DataFrame(aggregated_measurements)
+
+# Returns the average measurement over the last 3 hours
+def get_recent_measurements(metadata_file: str) -> pd.DataFrame:
+
+    metadata = pd.read_csv(metadata_file)
+    metadata['series-id'] = metadata['series-id'].astype(str)
+
+    url = f"https://geo.irceline.be/sos/api/v1/timeseries/getData"
+    
+    # last 3 hours - ISO_8601 format https://en.wikipedia.org/wiki/ISO_8601#Time_intervals
+    timespan = "PT3H/" + datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    body = {
+        'timespan': timespan,
+        'timeseries': list(metadata['series-id'].unique())
+    }
+
+    response = requests.post(
+        url=url, 
+        json=body,
+        headers={'Accept': 'application/json'}
+        )
+    response.raise_for_status()
+
+    measurements = pd.merge(
+        left=_parse_measurements(json.loads(response.content)),
+        right=metadata,
+        how='left',
+        on='series-id')
+
+    # filters the correct reference value
+    measurements = measurements[
+        (measurements['reference-value-lower'].isna()) |
+        ((measurements['reference-value-lower'] <= measurements['measurement']) & (measurements['measurement'] < measurements['reference-value-upper']))
+    ]
+
+    return measurements
+    
+
