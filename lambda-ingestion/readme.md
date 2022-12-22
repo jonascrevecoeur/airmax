@@ -4,7 +4,7 @@ This lambda function ingests OpenAQ measurements from SQS into a MariaDB databas
 
 ## Environmental variables
 
-The lambda function depends on the following environmental variables:
+This lambda function depends on the following environmental variables:
 
 - DB_HOSTNAME: Host address of the MariaDB database
 - DB_PASSWORD: Password of the MariaDB database - TODO: Move this to a secret in the Secrets Manager

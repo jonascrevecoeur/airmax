@@ -1,5 +1,3 @@
-Niet vergeten de environment variabeles van de lambda functies te vermelden
-
 # Streaming
 
 These files explore the feasibility of processing the OpenAQ data continuously using AWS kinesis.
