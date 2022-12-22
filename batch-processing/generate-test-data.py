@@ -20,9 +20,9 @@ def connect_to_database(settings_file:Optional[str] = None) -> pymysql.connectio
     else:
         load_dotenv(settings_file)
 
-        rds_host  = os.environ.get('DB_HOSTNAME')
-        name = os.environ.get('DB_USERNAME')
-        password = os.environ.get('DB_PASSWORD')
+        rds_host  = os.environ.get('DB_HOSTNAME') #type: ignore
+        name = os.environ.get('DB_USERNAME') #type: ignore
+        password = os.environ.get('DB_PASSWORD') #type: ignore
 
     try:
         connection = pymysql.connect(
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     if len(args) > 2:
         settings_file = args[2] 
     else:
-        settings_file = None
+        settings_file = None #type: ignore
 
     generate_data(frequency, settings_file)
 
