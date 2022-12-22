@@ -13,7 +13,7 @@ def list_timeseries() -> dict:
 
     return json.loads(response.content)
 
-def _parse_timeseries_metadata(metadata:dict) -> dict:
+def _parse_timeseries_metadata(metadata:dict) -> list:
 
     core = {
         'series-id': metadata['id'],
@@ -70,7 +70,7 @@ def collect_and_store_metadata_as_csv(filename: str) -> None:
         # limit the number of requests per minute
         time.sleep(2)
 
-    pd.DataFrame(collected_metadata).to_csv(filename, index=None)
+    pd.DataFrame(collected_metadata).to_csv(filename, index=False)
 
 # TODO: Checking data quality when parsing measurements
 # -99.99 appears to be a placeholder for a failed measurement, but there might be other values used in this way

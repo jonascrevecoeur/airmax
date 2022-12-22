@@ -13,9 +13,15 @@ load_dotenv()
 database_connection = None
 kinesis_client=boto3.client('kinesis')
 
+def use_destination(env_variable_name:str) -> bool:
+    var = os.environ.get('send_to_kinesis')
+    if var is None:
+        return False
+    
+    return var.lower() in ['true', '1', 'y', 'yes']
 
-destination_kinesis = os.environ.get('send_to_kinesis').lower() in ['true', '1', 'y', 'yes']
-destination_mariadb = os.environ.get('send_to_mariadb').lower() in ['true', '1', 'y', 'yes']
+destination_kinesis = use_destination('send_to_kinesis')
+destination_mariadb = use_destination('send_to_mariadb')
 
 if (not destination_kinesis) and (not destination_mariadb):
     sys.exit('No destination configured')
@@ -31,7 +37,7 @@ def connect_to_database() -> None:
         # NOTE: Should request access to AWS Secrets Manager, to move DB_PASSWORD to a secret
         database_connection = pymysql.connect(
             user = os.environ.get('DB_USERNAME'),
-            password = os.environ.get('DB_PASSWORD'),
+            password = os.environ.get('DB_PASSWORD'), # type: ignore
             host = os.environ.get('DB_HOSTNAME'),
             port = 3306,
             connect_timeout=5
@@ -84,7 +90,7 @@ def lambda_handler(event, context):
     if destination_mariadb:
         records_mariadb = [tuple(record.values()) for record in records]
         print(records_mariadb)
-        cursor = database_connection.cursor()
+        cursor = database_connection.cursor() # type: ignore
         cursor.executemany(sql, records_mariadb)
-        database_connection.commit()
+        database_connection.commit() # type: ignore
         cursor.close()

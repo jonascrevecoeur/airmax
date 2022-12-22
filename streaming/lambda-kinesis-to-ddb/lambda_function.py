@@ -6,7 +6,7 @@ from decimal import Decimal
 
 # get reference to dynamodb
 database = os.environ.get('database')
-dynamodb = boto3.resource('dynamodb').Table(database)
+dynamodb = boto3.resource('dynamodb').Table(database) #type: ignore
 
 def lambda_handler(event, context):
     

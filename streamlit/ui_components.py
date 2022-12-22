@@ -7,7 +7,7 @@ from streamlit_folium import st_folium
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Optional
 
 @dataclass
 class Point:
@@ -28,9 +28,9 @@ class Point:
         close_lon = self.lon - 0.0001 <= other.lon <= self.lon + 0.0001
         return close_lat and close_lon
 
-def show_map(measurements: pd.DataFrame) -> folium.Map:
+def show_map(measurements: pd.DataFrame):
 
-    m = folium.Map(location=[50.7, 5], zoom_start=7.3)
+    m = folium.Map(location=[50.7, 5], zoom_start=7.3) # type: ignore
 
     for index, row in measurements.iterrows():
         popup = folium.Popup(f"""
@@ -38,7 +38,7 @@ def show_map(measurements: pd.DataFrame) -> folium.Map:
                     {row['phenomenon']}: {row['measurement']} <br>
                     #measurements in past 3 hours: {row['num-measurements']}
                     """,
-                    max_width = 250)
+                    max_width = str(250))
 
         folium.CircleMarker(
             location = [row['latitude'], row['longitude']], 
@@ -53,7 +53,7 @@ def show_map(measurements: pd.DataFrame) -> folium.Map:
 
     return st_folium(m, width = 800, height=400)
 
-def get_location_clicked(map: folium.Map, measurements: pd.DataFrame) -> str:
+def get_location_clicked(map, measurements: pd.DataFrame) -> Optional[str]:
 
     try:
         point_clicked = Point.from_dict(map["last_object_clicked"])
@@ -73,7 +73,7 @@ def show_info_table(measurements: pd.DataFrame, selected_location) -> None:
     data_location = (
         measurements[measurements['location-name'] == selected_location].
         filter(['phenomenon', 'measurement', 'num-measurements', 'reference-value-color']).
-        rename(columns= {'reference-value-color': 'reference'}))
+        rename(columns= {'reference-value-color': 'reference'})) # type:ignore
 
     st.text(f"All measurements for {selected_location.split(' - ')[1]} averaged over the last 3 hours")
 

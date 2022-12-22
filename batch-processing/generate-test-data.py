@@ -4,12 +4,13 @@ import time
 import random
 import string
 from datetime import datetime, timedelta
+from typing import Optional
 
 import pymysql
 from dotenv import load_dotenv
 import numpy as np
 
-def connect_to_database(settings_file:str = None) -> pymysql.connections.Connection:
+def connect_to_database(settings_file:Optional[str] = None) -> pymysql.connections.Connection:
 
     if settings_file is None: 
         rds_host  = "localhost"
@@ -28,7 +29,6 @@ def connect_to_database(settings_file:str = None) -> pymysql.connections.Connect
             host=rds_host, 
             user=name, 
             passwd=password, 
-            db=db_name, 
             connect_timeout=5
         )
     except pymysql.Error as e:
@@ -63,7 +63,7 @@ def generate_random_record() -> dict:
 
     return record
 
-def generate_data(frequency_per_minute:int, settings_file:str = None) -> None:
+def generate_data(frequency_per_minute:int, settings_file:Optional[str] = None) -> None:
     
     connection = connect_to_database(settings_file)
     cursor = connection.cursor()

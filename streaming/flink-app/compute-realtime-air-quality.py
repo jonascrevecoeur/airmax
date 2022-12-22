@@ -1,6 +1,7 @@
 import os
 import json
 import sys
+
 from pyflink.table import EnvironmentSettings, StreamTableEnvironment
 from pyflink.table.types import DataTypes
 from pyflink.table.window import Slide
@@ -8,7 +9,7 @@ from pyflink.table.expressions import col, lit, local_timestamp
 
 # Setup
 env_settings = EnvironmentSettings.in_streaming_mode()
-table_env = StreamTableEnvironment.create(environment_settings=env_settings)
+table_env = StreamTableEnvironment.create(environment_settings=env_settings) #type: ignore
 table_env.get_config().set_local_timezone("UTC")
 
 REMOTE_APPLICATION_PROPERTIES_FILE_PATH =  "/etc/flink/application_properties.json"  
@@ -30,7 +31,7 @@ def get_application_properties(local: bool = False) -> dict:
         raise Exception(f'Application file not found at {filename}')
 
 
-def get_property_group(props: dict, property_group_id: str) -> dict:
+def get_property_group(props: dict, property_group_id: str) -> dict: #type: ignore
     for prop in props:
         if prop["PropertyGroupId"] == property_group_id:
             return prop["PropertyMap"]

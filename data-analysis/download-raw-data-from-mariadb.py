@@ -4,6 +4,7 @@ import time
 import random
 import string
 from datetime import datetime, timedelta
+from typing import Optional
 
 from dotenv import load_dotenv
 import pymysql
@@ -30,11 +31,11 @@ def connect_to_database() -> pymysql.connections.Connection:
 
     return connection
 
-def download_data(destination:str = None) -> None:
+def download_data(destination:Optional[str] = None) -> None:
     
     connection = connect_to_database()
 
-    data = pd.read_sql("select * from openaq.raw", connection)
+    data = pd.read_sql("select * from openaq.raw", connection) # type: ignore
     data.to_csv(destination, index=False)
 
     connection.close()

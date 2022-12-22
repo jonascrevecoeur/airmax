@@ -26,7 +26,7 @@ phenomena_available = {
     'PM2.5': 'Particulate Matter < 2.5 µm'
 }
 
-phenomenon_selected = phenomena_available[st.selectbox("Phenomenon:", list(phenomena_available.keys()))]
+phenomenon_selected = phenomena_available[st.selectbox("Phenomenon:", list(phenomena_available.keys()))] # type:ignore
 
 if 'measurements_json' in st.session_state:
     measurements = pd.DataFrame(json.loads(st.session_state['measurements_json']))
@@ -35,7 +35,7 @@ else:
         measurements = irceline_api.get_recent_measurements('data/metadata.csv')
         st.session_state['measurements_json'] = measurements.to_json()
 
-measurements_phenomenon = measurements[measurements['phenomenon'] == phenomenon_selected]
+measurements_phenomenon:pd.DataFrame = measurements[measurements['phenomenon'] == phenomenon_selected]
 
 map = ui_components.show_map(measurements_phenomenon)
 
