@@ -29,3 +29,48 @@ CREATE TABLE openaq.current_air_quality (
     num_measurements int,
     evaluation_time_utc datetime
 );
+
+drop table if exists openaq.irceline_measurements_historical ;
+CREATE TABLE openaq.irceline_measurements_historical (
+  measurement_fetch_time_utc datetime, 
+  series_id int,
+  location_id int,
+  location_name varchar(255),
+  latitude decimal(8,6),
+  longitude decimal(9,6),
+  parameter_name varchar(255),
+  parameter_value double,
+  num_measurements int,
+  reference_value_lower double null,
+  reference_value_upper double null,
+  reference_color varchar(255)  
+);
+
+drop table if exists openaq.irceline_measurements_current;
+CREATE TABLE openaq.irceline_measurements_current (
+  measurement_fetch_time_utc datetime, 
+  series_id int,
+  location_id int,
+  location_name varchar(255),
+  latitude decimal(8,6),
+  longitude decimal(9,6),
+  parameter_name varchar(255),
+  parameter_value double,
+  num_measurements int,
+  reference_value_lower double null,
+  reference_value_upper double null,
+  reference_color varchar(255)  
+);
+
+drop table if exists openaq.irceline_sensor_metadata;
+CREATE TABLE openaq.irceline_sensor_metadata (
+  series_id int,
+  location_id int,
+  location_name varchar(255),
+  latitude decimal(8,6),
+  longitude decimal(9,6),
+  parameter_name varchar(255),
+  reference_value_lower double null,
+  reference_value_upper double null,
+  reference_color varchar(255)  
+);
